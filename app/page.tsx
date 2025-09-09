@@ -1,101 +1,278 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Mic, MicOff, Send, Home, FileText, Settings } from "lucide-react"
+import { useWebRTC } from "@/hooks/use-webrtc"
+import { VideoFeed } from "@/components/video-feed"
+import { SessionManager } from "@/components/session-manager"
+import { AIChatPanel } from "@/components/ai-chat-panel"
+import { TranslationPanel } from "@/components/translation-panel"
+
+export default function DoctorDashboard() {
+  const [isDirectTalkActive, setIsDirectTalkActive] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const [doctorMessage, setDoctorMessage] = useState("")
+  const [aiChatInput, setAiChatInput] = useState("")
+  const [currentSessionId, setCurrentSessionId] = useState("")
+  const [selectedPatientMessage, setSelectedPatientMessage] = useState<string>("")
+  const [conversationContext, setConversationContext] = useState<string>("")
+  const [currentPatientMessage, setCurrentPatientMessage] = useState("")
+  const [translatedPatientMessage, setTranslatedPatientMessage] = useState("")
+  const webrtc = useWebRTC(currentSessionId, true)
+
+  // Mock data
+  const caseDetails = {
+    patientId: "P-2024-001",
+    patientName: "राज पटेल",
+    age: 45,
+    language: "Marathi",
+    startTime: "10:30 AM",
+  }
+
+  const conversation = [
+    { id: 1, sender: "patient", message: "I have Fever Doctor please help me", timestamp: "10:31 AM" },
+    { id: 2, sender: "doctor", message: "How long have you had this fever?", timestamp: "10:32 AM" },
+    { id: 3, sender: "patient", message: "मला ताप आला आहे डॉक्टर कृपया मला मदत करा", timestamp: "10:33 AM" },
+  ]
+
+  const handleSessionStart = (sessionId: string) => {
+    setCurrentSessionId(sessionId)
+    webrtc.startCall()
+  }
+
+  const handleSessionEnd = () => {
+    webrtc.endCall()
+    setCurrentSessionId("")
+  }
+
+  const handleSendToAI = (message: string) => {
+    setSelectedPatientMessage(message)
+    const context = conversation
+      .slice(-5)
+      .map((msg) => `${msg.sender}: ${msg.message}`)
+      .join("\n")
+    setConversationContext(context)
+  }
+
+  const handleSendToUser = (aiResponse: string) => {
+    setDoctorMessage(aiResponse)
+    console.log("[v0] AI response sent to user input:", aiResponse)
+  }
+
+  const handlePatientMessageSelect = (message: string) => {
+    setCurrentPatientMessage(message)
+    handleSendToAI(message)
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="h-screen bg-background flex flex-col">
+      {/* VS Code-like Header - Light Theme */}
+      <header className="bg-white text-[#333333] h-8 flex items-center justify-between border-b border-[#e0e0e0] select-none">
+        <div className="flex items-center h-full">
+          <div className="px-4 h-full flex items-center hover:bg-[#f5f5f5] cursor-pointer">
+            <span className="text-sm font-medium">Arogya Sahayak</span>
+          </div>
+          <div className="flex h-full">
+            <div className="px-4 h-full flex items-center hover:bg-[#f5f5f5] cursor-pointer text-[#333333] hover:text-[#000000]">
+              <span className="text-sm">File</span>
+            </div>
+            <div className="px-4 h-full flex items-center hover:bg-[#f5f5f5] cursor-pointer text-[#333333] hover:text-[#000000]">
+              <span className="text-sm">Edit</span>
+            </div>
+            <div className="px-4 h-full flex items-center hover:bg-[#f5f5f5] cursor-pointer text-[#333333] hover:text-[#000000]">
+              <span className="text-sm">View</span>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+        <div className="flex-1 flex justify-center">
+          <span className="text-sm text-[#333333] font-medium">Case: {caseDetails.patientName} - {caseDetails.patientId}</span>
+        </div>
+        <div className="flex items-center h-full">
+          <div className="flex items-center px-4 h-full">
+            <div className={`w-2 h-2 rounded-full mr-2 ${webrtc.isConnected ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+            <span className="text-xs text-[#666666]">
+              {webrtc.isConnected ? 'Connected' : webrtc.isConnecting ? 'Connecting...' : 'Disconnected'}
+            </span>
+          </div>
+          <div className="w-8 h-8 flex items-center justify-center hover:bg-[#f5f5f5] cursor-pointer text-[#666666] hover:text-[#333333]">
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11 6H1M6 11V1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <div className="w-8 h-8 flex items-center justify-center hover:bg-[#f5f5f5] cursor-pointer text-[#666666] hover:text-[#333333]">
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="1" width="10" height="10" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+            </svg>
+          </div>
+          <div className="w-8 h-8 flex items-center justify-center hover:bg-[#e81123] text-[#666666] hover:text-white cursor-pointer">
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11 1L1 11M1 1L11 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
+        </div>
+      </header>
+
+      {/* Status Bar - Light Theme */}
+      <div className="bg-[#f5f5f5] text-[#333333] text-xs h-6 flex items-center px-4 justify-between border-t border-b border-[#e0e0e0]">
+        <div className="flex items-center space-x-4">
+          <span className="flex items-center text-[#333333]">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
+            {caseDetails.patientName} • {caseDetails.patientId}
+          </span>
+          <span className="text-[#666666]">{caseDetails.language}</span>
+          <span className="text-[#666666]">Age: {caseDetails.age}</span>
+        </div>
+        <div className="flex items-center">
+          <span className="text-[#666666]">{caseDetails.startTime}</span>
+        </div>
+      </div>
+      
+      {webrtc.error && (
+        <div className="bg-red-900 text-red-100 text-xs p-1.5 px-4 flex items-center">
+          <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {webrtc.error}
+        </div>
+      )}
+
+      {/* Main Content Area with Sidebar */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Side - Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden bg-white">
+          {/* Session Controls - White Theme */}
+          <SessionManager
+            isDoctor={true}
+            onSessionStart={handleSessionStart}
+            onSessionEnd={handleSessionEnd}
+            isConnected={webrtc.isConnected}
+            isConnecting={webrtc.isConnecting}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+          {/* Main Editor Area - 3 Panels */}
+          <div className="flex-1 flex gap-4 p-4 overflow-auto">
+          {/* Panel 1: User Input / Conversation */}
+          <Card className="flex-1 bg-white border-gray-200">
+            <div className="p-3 border-b bg-gray-50">
+              <h3 className="font-mono text-xs font-medium text-gray-700 tracking-wider">USER INPUT</h3>
+            </div>
+            <div className="p-4 h-96 overflow-y-auto space-y-3">
+              {conversation.map((msg) => (
+                <div key={msg.id} className={`flex ${msg.sender === "doctor" ? "justify-end" : "justify-start"}`}>
+                  <div
+                    className={`max-w-xs p-3 rounded-md ${
+                      msg.sender === "doctor" 
+                        ? "bg-blue-600 text-white" 
+                        : "bg-gray-50 border border-gray-200"
+                    }`}
+                  >
+                    <p className="text-sm font-mono">{msg.message}</p>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xs text-gray-500">{msg.timestamp}</span>
+                      {msg.sender === "patient" && (
+                        <button
+                          onClick={() => handlePatientMessageSelect(msg.message)}
+                          className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded flex items-center transition-colors font-mono"
+                        >
+                          <Send className="w-3 h-3 mr-1.5" />
+                          <span className="text-xs">TO AI</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Panel 2: Translation & Actions */}
+          <Card className="flex-1 bg-white border-gray-200">
+            <div className="p-4 border-b bg-gray-50">
+              <h3 className="font-semibold text-gray-800 text-center">Translation</h3>
+            </div>
+            <div className="p-4">
+              <TranslationPanel
+                inputText={currentPatientMessage}
+                onTranslatedTextChange={setTranslatedPatientMessage}
+                defaultFromLang="mr"
+                defaultToLang="en"
+              />
+
+              <div className="mt-4 space-y-2">
+                <div className="flex gap-2">
+                  <Button
+                    variant={isDirectTalkActive ? "default" : "outline"}
+                    onClick={() => setIsDirectTalkActive(!isDirectTalkActive)}
+                    className={`flex-1 h-8 px-3 text-xs font-mono justify-start ${isDirectTalkActive ? 'bg-blue-600 hover:bg-blue-700' : 'bg-opacity-50 hover:bg-opacity-100'}`}
+                  >
+                    {isDirectTalkActive ? (
+                      <MicOff className="w-3.5 h-3.5 mr-2" />
+                    ) : (
+                      <Mic className="w-3.5 h-3.5 mr-2" />
+                    )}
+                    <span className="font-medium">Direct Talk</span>
+                    {isDirectTalkActive && (
+                      <span className="ml-auto text-xs text-blue-200">ACTIVE</span>
+                    )}
+                  </Button>
+                  <Button
+                    variant={isRecording ? "destructive" : "outline"}
+                    onMouseDown={() => setIsRecording(true)}
+                    onMouseUp={() => setIsRecording(false)}
+                    onMouseLeave={() => setIsRecording(false)}
+                    className={`flex-1 h-8 px-3 text-xs font-mono justify-start ${isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-opacity-50 hover:bg-opacity-100'}`}
+                  >
+                    <Mic className="w-3.5 h-3.5 mr-2" />
+                    <span className="font-medium">Record & Translate</span>
+                    {isRecording && (
+                      <span className="ml-auto flex items-center">
+                        <span className="relative flex h-2 w-2 mr-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-300 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-400"></span>
+                        </span>
+                        <span className="text-xs text-red-200">REC</span>
+                      </span>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Panel 3: Video Feeds */}
+          <div className="flex-1 space-y-4">
+            <VideoFeed stream={webrtc.remoteStream} title="Patient's camera feed" />
+
+            <VideoFeed
+              stream={webrtc.localStream}
+              title="Doctor's camera feed"
+              isLocal={true}
+              isVideoEnabled={webrtc.isVideoEnabled}
+              isAudioEnabled={webrtc.isAudioEnabled}
+              onToggleVideo={webrtc.toggleVideo}
+              onToggleAudio={webrtc.toggleAudio}
+            />
+          </div>
+          </div>
+        </div>
+
+        {/* AI Chat Sidebar - Full Height */}
+        <div className="w-80 bg-purple-100 border-l border-purple-200 flex flex-col">
+          <div className="bg-purple-200 p-2 border-b border-purple-300">
+            <h3 className="font-medium text-purple-900 text-sm">AI ASSISTANT</h3>
+          </div>
+          <div className="flex-1 overflow-auto">
+            <AIChatPanel
+              patientMessage={selectedPatientMessage}
+              conversationContext={conversationContext}
+              onSendToUser={handleSendToUser}
+            />
+          </div>
+        </div>
+      </div>
     </div>
-  );
+  )
 }
