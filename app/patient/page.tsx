@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Mic, Keyboard, Send, Languages } from "lucide-react"
-import { useWebRTC } from "@/hooks/use-webrtc"
-import { VideoFeed } from "@/components/video-feed"
+import { LiveKitRoom, VideoConference } from '@livekit/components-react';
 import { SessionManager } from "@/components/session-manager"
 import { useTranslation } from "@/hooks/use-translation"
 
@@ -32,7 +31,7 @@ export default function PatientKiosk() {
   const [messages, setMessages] = useState<
     Array<{ id: number; sender: string; message: string; translatedMessage?: string; timestamp: string }>
   >([])
-  const webrtc = useWebRTC(currentSessionId, false)
+  const [token, setToken] = useState("");
   const { translate, isTranslating } = useTranslation()
 
   useEffect(() => {
@@ -79,15 +78,19 @@ export default function PatientKiosk() {
     setCurrentScreen("session")
   }
 
-  const handleSessionStart = (sessionId: string) => {
+  const handleSessionStart = async (sessionId: string) => {
     setCurrentSessionId(sessionId)
-    webrtc.startCall()
+    const resp = await fetch(
+      `/api/livekit?room=${sessionId}&username=patient`
+    );
+    const data = await resp.json();
+    setToken(data.token);
     setCurrentScreen("chat")
   }
 
   const handleSessionEnd = () => {
-    webrtc.endCall()
     setCurrentSessionId("")
+    setToken("")
     setCurrentScreen("welcome")
   }
 
@@ -136,8 +139,8 @@ export default function PatientKiosk() {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Arogya Sahayak</h1>
             <div className="flex items-center gap-4">
-              <Badge className={webrtc.isConnected ? "bg-green-500 text-white" : "bg-yellow-500 text-white"}>
-                {webrtc.isConnected ? "Connected" : webrtc.isConnecting ? "Connecting" : "Disconnected"}
+              <Badge className={token ? "bg-green-500 text-white" : "bg-yellow-500 text-white"}>
+                {token ? "Connected" : "Disconnected"}
               </Badge>
               <Badge className="bg-blue-500 text-white text-lg px-4 py-2 flex items-center gap-2">
                 <Languages className="w-4 h-4" />
@@ -152,7 +155,15 @@ export default function PatientKiosk() {
 
         {/* Doctor Video Feed */}
         <div className="m-6 mb-4">
-          <VideoFeed stream={webrtc.remoteStream} title="Doctor Video" />
+        {token && (
+            <LiveKitRoom
+              serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+              token={token}
+              connect={true}
+            >
+              <VideoConference />
+            </LiveKitRoom>
+          )}
         </div>
 
         {/* Conversation Area */}
@@ -336,12 +347,9 @@ export default function PatientKiosk() {
             isDoctor={false}
             onSessionStart={handleSessionStart}
             onSessionEnd={handleSessionEnd}
-            isConnected={webrtc.isConnected}
-            isConnecting={webrtc.isConnecting}
+            isConnected={!!token}
+            isConnecting={false}
           />
-
-          {webrtc.error && <div className="mt-4 p-3 bg-red-100 text-red-700 rounded text-center">{webrtc.error}</div>}
-
           <div className="mt-6 text-center">
             <Button onClick={() => setCurrentScreen("language")} variant="outline" className="text-lg px-8 py-3">
               Back to Language Selection

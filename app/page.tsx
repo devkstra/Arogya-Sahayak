@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Mic, MicOff, Send, Home, FileText, Settings } from "lucide-react"
-import { useWebRTC } from "@/hooks/use-webrtc"
-import { VideoFeed } from "@/components/video-feed"
+import { useLivekit } from "@/hooks/useLivekit"
+import { LiveKitRoom, VideoConference } from '@livekit/components-react';
 import { SessionManager } from "@/components/session-manager"
 import { AIChatPanel } from "@/components/ai-chat-panel"
 import { TranslationPanel } from "@/components/translation-panel"
@@ -21,7 +21,7 @@ export default function DoctorDashboard() {
   const [conversationContext, setConversationContext] = useState<string>("")
   const [currentPatientMessage, setCurrentPatientMessage] = useState("")
   const [translatedPatientMessage, setTranslatedPatientMessage] = useState("")
-  const webrtc = useWebRTC(currentSessionId, true)
+  const [token, setToken] = useState("");
 
   // Mock data
   const caseDetails = {
@@ -38,14 +38,18 @@ export default function DoctorDashboard() {
     { id: 3, sender: "patient", message: "मला ताप आला आहे डॉक्टर कृपया मला मदत करा", timestamp: "10:33 AM" },
   ]
 
-  const handleSessionStart = (sessionId: string) => {
-    setCurrentSessionId(sessionId)
-    webrtc.startCall()
+  const handleSessionStart = async (sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    const resp = await fetch(
+      `/api/livekit?room=${sessionId}&username=doctor`
+    );
+    const data = await resp.json();
+    setToken(data.token);
   }
 
   const handleSessionEnd = () => {
-    webrtc.endCall()
     setCurrentSessionId("")
+    setToken("")
   }
 
   const handleSendToAI = (message: string) => {
@@ -92,9 +96,9 @@ export default function DoctorDashboard() {
         </div>
         <div className="flex items-center h-full">
           <div className="flex items-center px-4 h-full">
-            <div className={`w-2 h-2 rounded-full mr-2 ${webrtc.isConnected ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+            <div className={`w-2 h-2 rounded-full mr-2 ${token ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
             <span className="text-xs text-[#666666]">
-              {webrtc.isConnected ? 'Connected' : webrtc.isConnecting ? 'Connecting...' : 'Disconnected'}
+              {token ? 'Connected' : 'Disconnected'}
             </span>
           </div>
           <div className="w-8 h-8 flex items-center justify-center hover:bg-[#f5f5f5] cursor-pointer text-[#666666] hover:text-[#333333]">
@@ -130,15 +134,6 @@ export default function DoctorDashboard() {
         </div>
       </div>
       
-      {webrtc.error && (
-        <div className="bg-red-900 text-red-100 text-xs p-1.5 px-4 flex items-center">
-          <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          {webrtc.error}
-        </div>
-      )}
-
       {/* Main Content Area with Sidebar */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Side - Main Content */}
@@ -148,8 +143,8 @@ export default function DoctorDashboard() {
             isDoctor={true}
             onSessionStart={handleSessionStart}
             onSessionEnd={handleSessionEnd}
-            isConnected={webrtc.isConnected}
-            isConnecting={webrtc.isConnecting}
+            isConnected={!!token}
+            isConnecting={false}
           />
 
           {/* Main Editor Area - 3 Panels */}
@@ -244,17 +239,15 @@ export default function DoctorDashboard() {
 
           {/* Panel 3: Video Feeds */}
           <div className="flex-1 space-y-4">
-            <VideoFeed stream={webrtc.remoteStream} title="Patient's camera feed" />
-
-            <VideoFeed
-              stream={webrtc.localStream}
-              title="Doctor's camera feed"
-              isLocal={true}
-              isVideoEnabled={webrtc.isVideoEnabled}
-              isAudioEnabled={webrtc.isAudioEnabled}
-              onToggleVideo={webrtc.toggleVideo}
-              onToggleAudio={webrtc.toggleAudio}
-            />
+          {token && (
+            <LiveKitRoom
+              serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+              token={token}
+              connect={true}
+            >
+              <VideoConference />
+            </LiveKitRoom>
+          )}
           </div>
           </div>
         </div>
