@@ -12,6 +12,7 @@
     "@ai-sdk/xai": "2.0.16",
     "@hookform/resolvers": "^3.10.0",
     "@livekit/components-react": "^1.5.3",
+    "@livekit/components-styles": "^1.1.6",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
     "@radix-ui/react-aspect-ratio": "1.1.1",

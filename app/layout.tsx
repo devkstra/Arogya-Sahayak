@@ -1,3 +1,6 @@
+// app/layout.tsx
+
+import '@livekit/components-styles'; // <-- This will now work
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";

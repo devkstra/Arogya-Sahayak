@@ -1,11 +1,12 @@
+// app/page.tsx
+
 "use client"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Mic, MicOff, Send, Home, FileText, Settings } from "lucide-react"
-import { useLivekit } from "@/hooks/useLivekit"
+import { Mic, MicOff, Send } from "lucide-react"
 import { LiveKitRoom, VideoConference } from '@livekit/components-react';
 import { SessionManager } from "@/components/session-manager"
 import { AIChatPanel } from "@/components/ai-chat-panel"
@@ -15,8 +16,7 @@ export default function DoctorDashboard() {
   const [isDirectTalkActive, setIsDirectTalkActive] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const [doctorMessage, setDoctorMessage] = useState("")
-  const [aiChatInput, setAiChatInput] = useState("")
-  const [currentSessionId, setCurrentSessionId] = useState("")
+  const [currentSessionId, setCurrentSessionId] = useState("arogya-sahayak-room") // Hardcoded room name
   const [selectedPatientMessage, setSelectedPatientMessage] = useState<string>("")
   const [conversationContext, setConversationContext] = useState<string>("")
   const [currentPatientMessage, setCurrentPatientMessage] = useState("")
@@ -38,17 +38,16 @@ export default function DoctorDashboard() {
     { id: 3, sender: "patient", message: "मला ताप आला आहे डॉक्टर कृपया मला मदत करा", timestamp: "10:33 AM" },
   ]
 
-  const handleSessionStart = async (sessionId: string) => {
-    setCurrentSessionId(sessionId);
+  const handleSessionStart = async () => {
     const resp = await fetch(
-      `/api/livekit?room=${sessionId}&username=doctor`
+      `/api/livekit?room=${currentSessionId}&username=doctor`
     );
     const data = await resp.json();
     setToken(data.token);
   }
 
   const handleSessionEnd = () => {
-    setCurrentSessionId("")
+    setCurrentSessionId("arogya-sahayak-room")
     setToken("")
   }
 
@@ -73,22 +72,11 @@ export default function DoctorDashboard() {
 
   return (
     <div className="h-screen bg-background flex flex-col">
-      {/* VS Code-like Header - Light Theme */}
+      {/* Header */}
       <header className="bg-white text-[#333333] h-8 flex items-center justify-between border-b border-[#e0e0e0] select-none">
         <div className="flex items-center h-full">
           <div className="px-4 h-full flex items-center hover:bg-[#f5f5f5] cursor-pointer">
             <span className="text-sm font-medium">Arogya Sahayak</span>
-          </div>
-          <div className="flex h-full">
-            <div className="px-4 h-full flex items-center hover:bg-[#f5f5f5] cursor-pointer text-[#333333] hover:text-[#000000]">
-              <span className="text-sm">File</span>
-            </div>
-            <div className="px-4 h-full flex items-center hover:bg-[#f5f5f5] cursor-pointer text-[#333333] hover:text-[#000000]">
-              <span className="text-sm">Edit</span>
-            </div>
-            <div className="px-4 h-full flex items-center hover:bg-[#f5f5f5] cursor-pointer text-[#333333] hover:text-[#000000]">
-              <span className="text-sm">View</span>
-            </div>
           </div>
         </div>
         <div className="flex-1 flex justify-center">
@@ -101,25 +89,9 @@ export default function DoctorDashboard() {
               {token ? 'Connected' : 'Disconnected'}
             </span>
           </div>
-          <div className="w-8 h-8 flex items-center justify-center hover:bg-[#f5f5f5] cursor-pointer text-[#666666] hover:text-[#333333]">
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M11 6H1M6 11V1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </div>
-          <div className="w-8 h-8 flex items-center justify-center hover:bg-[#f5f5f5] cursor-pointer text-[#666666] hover:text-[#333333]">
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="1" y="1" width="10" height="10" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-            </svg>
-          </div>
-          <div className="w-8 h-8 flex items-center justify-center hover:bg-[#e81123] text-[#666666] hover:text-white cursor-pointer">
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M11 1L1 11M1 1L11 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </div>
         </div>
       </header>
-
-      {/* Status Bar - Light Theme */}
+      {/* Status Bar */}
       <div className="bg-[#f5f5f5] text-[#333333] text-xs h-6 flex items-center px-4 justify-between border-t border-b border-[#e0e0e0]">
         <div className="flex items-center space-x-4">
           <span className="flex items-center text-[#333333]">
@@ -134,135 +106,57 @@ export default function DoctorDashboard() {
         </div>
       </div>
       
-      {/* Main Content Area with Sidebar */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Side - Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden bg-white">
-          {/* Session Controls - White Theme */}
-          <SessionManager
-            isDoctor={true}
-            onSessionStart={handleSessionStart}
-            onSessionEnd={handleSessionEnd}
-            isConnected={!!token}
-            isConnecting={false}
-          />
+          <Button onClick={token ? handleSessionEnd : handleSessionStart}>
+            {token ? "End Session" : "Start Session"}
+          </Button>
 
-          {/* Main Editor Area - 3 Panels */}
           <div className="flex-1 flex gap-4 p-4 overflow-auto">
-          {/* Panel 1: User Input / Conversation */}
-          <Card className="flex-1 bg-white border-gray-200">
-            <div className="p-3 border-b bg-gray-50">
-              <h3 className="font-mono text-xs font-medium text-gray-700 tracking-wider">USER INPUT</h3>
-            </div>
-            <div className="p-4 h-96 overflow-y-auto space-y-3">
-              {conversation.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.sender === "doctor" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-xs p-3 rounded-md ${
-                      msg.sender === "doctor" 
-                        ? "bg-blue-600 text-white" 
-                        : "bg-gray-50 border border-gray-200"
-                    }`}
-                  >
-                    <p className="text-sm font-mono">{msg.message}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-gray-500">{msg.timestamp}</span>
-                      {msg.sender === "patient" && (
-                        <button
-                          onClick={() => handlePatientMessageSelect(msg.message)}
-                          className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded flex items-center transition-colors font-mono"
-                        >
-                          <Send className="w-3 h-3 mr-1.5" />
-                          <span className="text-xs">TO AI</span>
-                        </button>
-                      )}
+            <Card className="flex-1 bg-white border-gray-200">
+              <div className="p-3 border-b bg-gray-50">
+                <h3 className="font-mono text-xs font-medium text-gray-700 tracking-wider">USER INPUT</h3>
+              </div>
+              <div className="p-4 h-96 overflow-y-auto space-y-3">
+                {conversation.map((msg) => (
+                  <div key={msg.id} className={`flex ${msg.sender === "doctor" ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-xs p-3 rounded-md ${msg.sender === "doctor" ? "bg-blue-600 text-white" : "bg-gray-50 border border-gray-200"}`}>
+                      <p className="text-sm font-mono">{msg.message}</p>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-xs text-gray-500">{msg.timestamp}</span>
+                        {msg.sender === "patient" && (
+                          <button onClick={() => handlePatientMessageSelect(msg.message)} className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded flex items-center transition-colors font-mono">
+                            <Send className="w-3 h-3 mr-1.5" />
+                            <span className="text-xs">TO AI</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Panel 2: Translation & Actions */}
-          <Card className="flex-1 bg-white border-gray-200">
-            <div className="p-4 border-b bg-gray-50">
-              <h3 className="font-semibold text-gray-800 text-center">Translation</h3>
-            </div>
-            <div className="p-4">
-              <TranslationPanel
-                inputText={currentPatientMessage}
-                onTranslatedTextChange={setTranslatedPatientMessage}
-                defaultFromLang="mr"
-                defaultToLang="en"
-              />
-
-              <div className="mt-4 space-y-2">
-                <div className="flex gap-2">
-                  <Button
-                    variant={isDirectTalkActive ? "default" : "outline"}
-                    onClick={() => setIsDirectTalkActive(!isDirectTalkActive)}
-                    className={`flex-1 h-8 px-3 text-xs font-mono justify-start ${isDirectTalkActive ? 'bg-blue-600 hover:bg-blue-700' : 'bg-opacity-50 hover:bg-opacity-100'}`}
-                  >
-                    {isDirectTalkActive ? (
-                      <MicOff className="w-3.5 h-3.5 mr-2" />
-                    ) : (
-                      <Mic className="w-3.5 h-3.5 mr-2" />
-                    )}
-                    <span className="font-medium">Direct Talk</span>
-                    {isDirectTalkActive && (
-                      <span className="ml-auto text-xs text-blue-200">ACTIVE</span>
-                    )}
-                  </Button>
-                  <Button
-                    variant={isRecording ? "destructive" : "outline"}
-                    onMouseDown={() => setIsRecording(true)}
-                    onMouseUp={() => setIsRecording(false)}
-                    onMouseLeave={() => setIsRecording(false)}
-                    className={`flex-1 h-8 px-3 text-xs font-mono justify-start ${isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-opacity-50 hover:bg-opacity-100'}`}
-                  >
-                    <Mic className="w-3.5 h-3.5 mr-2" />
-                    <span className="font-medium">Record & Translate</span>
-                    {isRecording && (
-                      <span className="ml-auto flex items-center">
-                        <span className="relative flex h-2 w-2 mr-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-300 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-400"></span>
-                        </span>
-                        <span className="text-xs text-red-200">REC</span>
-                      </span>
-                    )}
-                  </Button>
-                </div>
+                ))}
               </div>
-            </div>
-          </Card>
+            </Card>
 
-          {/* Panel 3: Video Feeds */}
-          <div className="flex-1 space-y-4">
-          {token && (
-            <LiveKitRoom
-              serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
-              token={token}
-              connect={true}
-            >
-              <VideoConference />
-            </LiveKitRoom>
-          )}
-          </div>
+            <div className="flex-1 space-y-4">
+              {token ? (
+                <LiveKitRoom serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL} token={token} connect={true} video={true} audio={true}>
+                  <VideoConference />
+                </LiveKitRoom>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+                  <p className="text-gray-500">Session not started</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* AI Chat Sidebar - Full Height */}
         <div className="w-80 bg-purple-100 border-l border-purple-200 flex flex-col">
           <div className="bg-purple-200 p-2 border-b border-purple-300">
             <h3 className="font-medium text-purple-900 text-sm">AI ASSISTANT</h3>
           </div>
           <div className="flex-1 overflow-auto">
-            <AIChatPanel
-              patientMessage={selectedPatientMessage}
-              conversationContext={conversationContext}
-              onSendToUser={handleSendToUser}
-            />
+            <AIChatPanel patientMessage={selectedPatientMessage} conversationContext={conversationContext} onSendToUser={handleSendToUser} />
           </div>
         </div>
       </div>
