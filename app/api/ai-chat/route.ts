@@ -43,7 +43,6 @@ export async function POST(request: NextRequest) {
       prompt: `Context: ${context || "No previous context"}\n\nPatient message: ${message}`,
       system: systemPrompt,
       temperature: 0.7,
-      maxTokens: 500,
     });
 
     return result.toTextStreamResponse();
