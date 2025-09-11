@@ -14,6 +14,7 @@ import {
   Video,
   Users,
   MoreVertical,
+  ExternalLink,
 } from "lucide-react";
 import { LiveKitRoom, VideoConference } from "@livekit/components-react";
 import { SessionManager } from "@/components/session-manager";
@@ -144,6 +145,15 @@ export default function DoctorDashboard() {
               {token ? "Connected" : "Disconnected"}
             </span>
           </div>
+          <Button
+            onClick={() => window.open("/patient", "_blank")}
+            size="sm"
+            variant="outline"
+            className="px-4 py-2 font-medium transition-all duration-200 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Patient View
+          </Button>
           <Button
             onClick={token ? handleSessionEnd : handleSessionStart}
             size="sm"
