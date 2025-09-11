@@ -29,11 +29,14 @@ import {
   Play,
   Pause,
 } from "lucide-react";
-import { LiveKitRoom, VideoConference } from "@livekit/components-react";
+import { LiveKitRoom, RoomAudioRenderer, VideoConference, useRoomContext } from "@livekit/components-react";
 import { SessionManager } from "@/components/session-manager";
 import { useTranslation } from "@/hooks/use-translation";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { useTextToSpeech } from "@/hooks/use-text-to-speech";
+import { useDeepgramTranscription } from "@/hooks/use-deepgram-transcription";
+import { Room } from "livekit-client";
+
 
 type Screen = "chat";
 type Language =
@@ -69,6 +72,28 @@ const languages = [
   { code: "tamil", name: "Tamil", nativeName: "தமிழ்", apiCode: "ta" },
   { code: "telugu", name: "Telugu", nativeName: "తెలుగు", apiCode: "te" },
 ];
+
+function LiveTranscription() {
+    const room = useRoomContext();
+    const { transcript, isTranscribing } = useDeepgramTranscription(room);
+
+    return (
+        <Card className="mx-4 lg:mx-6 mb-4 flex-1 min-h-0 shadow-2xl bg-white/95 backdrop-blur-sm border border-gray-200/60">
+            <div className="p-4 lg:p-5 bg-gradient-to-r from-blue-50 via-slate-50 to-blue-50 border-b border-gray-200/60 backdrop-blur-sm">
+                <h3 className="text-lg lg:text-xl font-semibold text-blue-800 text-center flex items-center justify-center">
+                    <div className="w-6 h-6 lg:w-7 lg:h-7 rounded-xl bg-blue-600 flex items-center justify-center mr-3 shadow-lg">
+                        <MessageSquare className="w-3 h-3 lg:w-4 lg:h-4 text-white" />
+                    </div>
+                    Live Transcription
+                </h3>
+            </div>
+            <div className="p-4 lg:p-6 flex-1 overflow-y-auto scrollbar-custom space-y-5 min-h-0 max-h-64 lg:max-h-80">
+                {isTranscribing && !transcript && <p className="text-gray-500">Listening...</p>}
+                <p>{transcript}</p>
+            </div>
+        </Card>
+    );
+}
 
 export default function PatientKioskWithEmergency() {
   return (
@@ -131,23 +156,44 @@ function PatientKiosk() {
     isLoading: isTTSLoading,
   } = useTextToSpeech();
 
-  useEffect(() => {
-    // Initialize with AI welcome message
-    setMessages([
-      {
-        id: 1,
-        sender: "ai",
-        message:
-          "Hello! I'm your AI Health Assistant. I'm here to help you prepare for your consultation with the doctor. How are you feeling today?",
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        aiGenerated: true,
-      },
-    ]);
-    proceedToConsultation();
+    const addAIMessage = useCallback((message: string, emergency = false) => {
+    const newMessage = {
+      id: Date.now(),
+      sender: "ai",
+      message,
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      aiGenerated: true,
+      isEmergency: emergency,
+    };
+    setMessages((prev) => [...prev, newMessage]);
   }, []);
+
+  const proceedToConsultation = useCallback(async () => {
+    setConnectionStatus("connecting");
+    // Connect to video call
+    const roomName = "arogya-sahayak-room";
+    try {
+      const resp = await fetch(
+        `/api/livekit?room=${roomName}&username=patient-${Math.random()
+          .toString(36)
+          .substring(7)}`
+      );
+      const data = await resp.json();
+      setToken(data.token);
+      setConnectionStatus("connected");
+      setCurrentScreen("chat");
+    } catch (error) {
+      setConnectionStatus("disconnected");
+      addAIMessage("Connection failed. Please try again or contact support.");
+    }
+  },[addAIMessage]);
+  
+  useEffect(() => {
+    proceedToConsultation();
+  }, [proceedToConsultation]);
 
   // AI Assessment Function
   const assessSymptoms = async (symptomData: Symptom[]) => {
@@ -196,21 +242,6 @@ function PatientKiosk() {
     } finally {
       setAiAssessing(false);
     }
-  };
-
-  const addAIMessage = (message: string, emergency = false) => {
-    const newMessage = {
-      id: messages.length + 1,
-      sender: "ai",
-      message,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      aiGenerated: true,
-      isEmergency: emergency,
-    };
-    setMessages((prev) => [...prev, newMessage]);
   };
 
   const generateMedicalSummary = async () => {
@@ -376,30 +407,6 @@ function PatientKiosk() {
       }
     }
   }, [messages, isVoiceEnabled]);
-
-  const proceedToConsultation = async () => {
-    setConnectionStatus("connecting");
-    // Connect to video call
-    const roomName = "arogya-sahayak-room";
-    try {
-      const resp = await fetch(
-        `/api/livekit?room=${roomName}&username=patient-${Math.random()
-          .toString(36)
-          .substring(7)}`
-      );
-      const data = await resp.json();
-      setToken(data.token);
-      setConnectionStatus("connected");
-      setCurrentScreen("chat");
-
-      addAIMessage(
-        "You're now connected with medical staff. Your symptoms and information have been shared with the doctor."
-      );
-    } catch (error) {
-      setConnectionStatus("disconnected");
-      addAIMessage("Connection failed. Please try again or contact support.");
-    }
-  };
 
   const handleSessionEnd = () => {
     // Reset all state
@@ -667,6 +674,8 @@ function PatientKiosk() {
                   className="w-full h-full"
                 >
                   <VideoConference />
+                  <RoomAudioRenderer />
+                  <LiveTranscription />
                 </LiveKitRoom>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black">

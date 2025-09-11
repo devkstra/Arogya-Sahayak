@@ -39,26 +39,9 @@ export default function DoctorDashboard() {
     startTime: "10:30 AM",
   };
 
-  const conversation = [
-    {
-      id: 1,
-      sender: "patient",
-      message: "I have Fever Doctor please help me",
-      timestamp: "10:31 AM",
-    },
-    {
-      id: 2,
-      sender: "doctor",
-      message: "How long have you had this fever?",
-      timestamp: "10:32 AM",
-    },
-    {
-      id: 3,
-      sender: "patient",
-      message: "मला ताप आला आहे डॉक्टर कृपया मला मदत करा",
-      timestamp: "10:33 AM",
-    },
-  ];
+  const [conversation, setConversation] = useState<
+    Array<{ id: number; sender: string; message: string; timestamp: string }>
+  >([]);
 
   const handleSessionStart = async () => {
     const resp = await fetch(
