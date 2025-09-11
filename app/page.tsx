@@ -7,411 +7,582 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Mic,
-  MicOff,
-  Send,
+  Heart,
+  Stethoscope,
+  Shield,
+  Users,
   MessageSquare,
   Video,
-  Users,
-  MoreVertical,
+  Star,
+  CheckCircle,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  Clock,
+  Award,
+  Globe,
+  Zap,
+  Menu,
+  X,
+  ChevronRight,
+  Play,
   ExternalLink,
 } from "lucide-react";
-import { LiveKitRoom, VideoConference } from "@livekit/components-react";
-import { SessionManager } from "@/components/session-manager";
-import { AIChatPanel } from "@/components/ai-chat-panel";
-import { TranslationPanel } from "@/components/translation-panel";
-import { MobileNav } from "@/components/mobile-nav";
+import Link from "next/link";
 
-export default function DoctorDashboard() {
-  const [isDirectTalkActive, setIsDirectTalkActive] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [doctorMessage, setDoctorMessage] = useState("");
-  const [currentSessionId, setCurrentSessionId] = useState(
-    "arogya-sahayak-room"
-  ); // Hardcoded room name
-  const [selectedPatientMessage, setSelectedPatientMessage] =
-    useState<string>("");
-  const [conversationContext, setConversationContext] = useState<string>("");
-  const [currentPatientMessage, setCurrentPatientMessage] = useState("");
-  const [translatedPatientMessage, setTranslatedPatientMessage] = useState("");
-  const [token, setToken] = useState("");
-  const [showAIPanel, setShowAIPanel] = useState(false); // For mobile AI panel toggle
+export default function HomePage() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Mock data
-  const caseDetails = {
-    patientId: "P-2024-001",
-    patientName: "राज पटेल",
-    age: 45,
-    language: "Marathi",
-    startTime: "10:30 AM",
-  };
+  const stats = [
+    { number: "50,000+", label: "Patients Served", icon: Users },
+    { number: "1,200+", label: "Medical Consultations", icon: Stethoscope },
+    { number: "15+", label: "Languages Supported", icon: Globe },
+    { number: "99.9%", label: "Uptime Reliability", icon: Shield },
+  ];
 
-  const conversation = [
+  const features = [
     {
-      id: 1,
-      sender: "patient",
-      message: "I have Fever Doctor please help me",
-      timestamp: "10:31 AM",
+      icon: Video,
+      title: "HD Video Consultations",
+      description:
+        "Crystal clear video calls with medical professionals using advanced LiveKit technology.",
+      color: "blue",
     },
     {
-      id: 2,
-      sender: "doctor",
-      message: "How long have you had this fever?",
-      timestamp: "10:32 AM",
+      icon: MessageSquare,
+      title: "AI-Powered Chat",
+      description:
+        "Intelligent chat assistance powered by Google Gemini for instant medical guidance.",
+      color: "purple",
     },
     {
-      id: 3,
-      sender: "patient",
-      message: "मला ताप आला आहे डॉक्टर कृपया मला मदत करा",
-      timestamp: "10:33 AM",
+      icon: Globe,
+      title: "Multi-Language Support",
+      description:
+        "Break language barriers with real-time translation in 15+ regional languages.",
+      color: "green",
+    },
+    {
+      icon: Shield,
+      title: "HIPAA Compliant",
+      description:
+        "Enterprise-grade security ensuring your medical data is always protected.",
+      color: "red",
+    },
+    {
+      icon: Calendar,
+      title: "Smart Scheduling",
+      description:
+        "AI-assisted appointment scheduling that adapts to your preferences and availability.",
+      color: "orange",
+    },
+    {
+      icon: Zap,
+      title: "Instant Diagnosis",
+      description:
+        "Quick symptom assessment and preliminary diagnosis using advanced AI algorithms.",
+      color: "cyan",
     },
   ];
 
-  const handleSessionStart = async () => {
-    const resp = await fetch(
-      `/api/livekit?room=${currentSessionId}&username=doctor`
-    );
-    const data = await resp.json();
-    setToken(data.token);
-  };
-
-  const handleSessionEnd = () => {
-    setCurrentSessionId("arogya-sahayak-room");
-    setToken("");
-  };
-
-  const handleSendToAI = (message: string) => {
-    setSelectedPatientMessage(message);
-    const context = conversation
-      .slice(-5)
-      .map((msg) => `${msg.sender}: ${msg.message}`)
-      .join("\n");
-    setConversationContext(context);
-  };
-
-  const handleSendToUser = (aiResponse: string) => {
-    setDoctorMessage(aiResponse);
-    console.log("[v0] AI response sent to user input:", aiResponse);
-  };
-
-  const handlePatientMessageSelect = (message: string) => {
-    setCurrentPatientMessage(message);
-    handleSendToAI(message);
-  };
+  const testimonials = [
+    {
+      name: "Dr. Priya Sharma",
+      role: "Cardiologist, AIIMS Delhi",
+      content:
+        "Arogya Sahayak has revolutionized how I connect with patients. The multi-language support breaks down barriers.",
+      rating: 5,
+      avatar: "👩‍⚕️",
+    },
+    {
+      name: "राजेश पटेल",
+      role: "Patient, Mumbai",
+      content:
+        "मुझे अपनी भाषा में डॉक्टर से बात करने में बहुत आसानी हुई। बहुत अच्छी सेवा है।",
+      rating: 5,
+      avatar: "👨",
+    },
+    {
+      name: "Dr. Tamil Selvan",
+      role: "General Physician, Chennai",
+      content:
+        "The AI assistance helps me provide better diagnosis. It's like having a medical assistant 24/7.",
+      rating: 5,
+      avatar: "👨‍⚕️",
+    },
+  ];
 
   return (
-    <div className="h-screen w-full bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col overflow-hidden">
-      {/* Mobile Navigation */}
-      <MobileNav
-        isConnected={!!token}
-        patientName={caseDetails.patientName}
-        patientId={caseDetails.patientId}
-        language={caseDetails.language}
-        age={caseDetails.age}
-        startTime={caseDetails.startTime}
-        onSessionToggle={token ? handleSessionEnd : handleSessionStart}
-        sessionActive={!!token}
-      />
-
-      {/* Desktop Header */}
-      <header className="hidden md:flex bg-white/95 backdrop-blur-sm text-slate-800 h-14 items-center justify-between border-b border-slate-200/60 select-none shadow-sm">
-        <div className="flex items-center h-full">
-          <div className="px-6 h-full flex items-center hover:bg-slate-50 cursor-pointer transition-all duration-200">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A</span>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg">
+                <Heart className="w-6 h-6 text-white" />
               </div>
-              <span className="text-lg font-semibold bg-gradient-to-r from-blue-700 to-slate-700 bg-clip-text text-transparent">
-                Arogya Sahayak
-              </span>
+              <div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">
+                  Arogya Sahayak
+                </h1>
+                <p className="text-xs text-slate-500 -mt-1">
+                  Your Health Companion
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
-        <div className="flex-1 flex justify-center">
-          <div className="bg-slate-50 rounded-full px-4 py-2 border border-slate-200">
-            <span className="text-sm text-slate-600 font-medium">
-              Case: {caseDetails.patientName} - {caseDetails.patientId}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center h-full space-x-4 px-6">
-          <div className="flex items-center bg-slate-50 rounded-full px-3 py-1.5 border border-slate-200">
-            <div
-              className={`w-2 h-2 rounded-full mr-2 ${
-                token ? "bg-green-500 animate-pulse" : "bg-amber-500"
-              }`}
-            ></div>
-            <span className="text-xs text-slate-600 font-medium">
-              {token ? "Connected" : "Disconnected"}
-            </span>
-          </div>
-          <Button
-            onClick={() => window.open("/patient", "_blank")}
-            size="sm"
-            variant="outline"
-            className="px-4 py-2 font-medium transition-all duration-200 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
-          >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Patient View
-          </Button>
-          <Button
-            onClick={token ? handleSessionEnd : handleSessionStart}
-            size="sm"
-            variant={token ? "destructive" : "default"}
-            className={`px-6 py-2 font-medium transition-all duration-200 ${
-              token
-                ? "bg-red-500 hover:bg-red-600 shadow-lg hover:shadow-xl"
-                : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl"
-            }`}
-          >
-            {token ? "End Session" : "Start Session"}
-          </Button>
-        </div>
-      </header>
 
-      {/* Desktop Status Bar */}
-      <div className="hidden md:flex bg-white/80 backdrop-blur-sm text-slate-600 text-sm h-10 items-center px-6 justify-between border-b border-slate-200/60">
-        <div className="flex items-center space-x-6">
-          <span className="flex items-center text-slate-700 font-medium">
-            <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
-            {caseDetails.patientName} • {caseDetails.patientId}
-          </span>
-          <Badge
-            variant="outline"
-            className="text-xs border-slate-300 text-slate-600"
-          >
-            {caseDetails.language}
-          </Badge>
-          <Badge
-            variant="outline"
-            className="text-xs border-slate-300 text-slate-600"
-          >
-            Age: {caseDetails.age}
-          </Badge>
-        </div>
-        <div className="flex items-center">
-          <span className="text-slate-500 text-xs font-medium">
-            {caseDetails.startTime}
-          </span>
-        </div>
-      </div>
-
-      <div className="flex-1 flex overflow-hidden">
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col xl:flex-row overflow-hidden">
-          {/* Chat and Video Container */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Mobile Session Controls */}
-            <div className="md:hidden p-4 bg-white/95 backdrop-blur-sm border-b border-slate-200/60">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      token ? "bg-green-500 animate-pulse" : "bg-amber-500"
-                    }`}
-                  ></div>
-                  <span className="text-sm font-medium text-slate-700">
-                    {token ? "Session Active" : "Session Inactive"}
-                  </span>
-                </div>
-                <Button
-                  onClick={() => setShowAIPanel(!showAIPanel)}
-                  size="sm"
-                  variant="outline"
-                  className="xl:hidden border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  AI Assistant
+            {/* Desktop Menu */}
+            <div className="hidden md:flex items-center space-x-8">
+              <Link
+                href="#features"
+                className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+              >
+                Features
+              </Link>
+              <Link
+                href="#services"
+                className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+              >
+                Services
+              </Link>
+              <Link
+                href="#testimonials"
+                className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+              >
+                Testimonials
+              </Link>
+              <Link
+                href="#contact"
+                className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+              >
+                Contact
+              </Link>
+              <Link
+                href="/dashboard"
+                className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+              >
+                Dashboard
+              </Link>
+              <Link href="/patient">
+                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200">
+                  <Stethoscope className="w-4 h-4 mr-2" />
+                  Start Consultation
                 </Button>
-              </div>
+              </Link>
             </div>
 
-            <div className="flex-1 flex flex-col xl:flex-row gap-6 p-6 overflow-hidden">
-              {/* Conversation Panel */}
-              <Card className="flex-1 bg-white/95 backdrop-blur-sm border-slate-200/60 shadow-xl flex flex-col min-h-0 rounded-xl">
-                <div className="p-5 border-b border-slate-200/60 bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-xl">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-slate-700 tracking-wide flex items-center">
-                      <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                        <Users className="w-3 h-3 text-blue-600" />
-                      </div>
-                      CONVERSATION
-                    </h3>
-                    <Badge
-                      variant="outline"
-                      className="text-xs border-green-200 text-green-700 bg-green-50"
-                    >
-                      <div className="w-2 h-2 rounded-full bg-green-500 mr-1.5 animate-pulse"></div>
-                      Live Chat
-                    </Badge>
-                  </div>
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              {isMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
+            </button>
+          </div>
+
+          {/* Mobile Menu */}
+          {isMenuOpen && (
+            <div className="md:hidden py-4 border-t border-slate-200/50 bg-white/95 backdrop-blur-md">
+              <div className="flex flex-col space-y-4">
+                <Link
+                  href="#features"
+                  className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+                >
+                  Features
+                </Link>
+                <Link
+                  href="#services"
+                  className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+                >
+                  Services
+                </Link>
+                <Link
+                  href="#testimonials"
+                  className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+                >
+                  Testimonials
+                </Link>
+                <Link
+                  href="#contact"
+                  className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+                >
+                  Contact
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="text-slate-600 hover:text-blue-600 font-medium transition-colors"
+                >
+                  Dashboard
+                </Link>
+                <Link href="/patient" className="w-full">
+                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg shadow-lg">
+                    <Stethoscope className="w-4 h-4 mr-2" />
+                    Start Consultation
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-6">
+              <Award className="w-4 h-4 mr-2" />
+              India's Most Trusted Telemedicine Platform
+            </div>
+            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-6 leading-tight">
+              Healthcare{" "}
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Without Barriers
+              </span>
+            </h1>
+            <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+              Connect with certified medical professionals through AI-powered
+              video consultations. Experience healthcare in your native language
+              with real-time translation and intelligent assistance.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link href="/patient">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-lg"
+                >
+                  <Play className="w-5 h-5 mr-2" />
+                  Start Free Consultation
+                </Button>
+              </Link>
+              <Button
+                size="lg"
+                variant="outline"
+                className="px-8 py-4 rounded-xl border-2 border-slate-300 hover:border-blue-300 hover:bg-blue-50 text-lg transition-all duration-200"
+                onClick={() =>
+                  document
+                    .getElementById("demo-video")
+                    ?.scrollIntoView({ behavior: "smooth" })
+                }
+              >
+                <Video className="w-5 h-5 mr-2" />
+                Watch Demo
+              </Button>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
+            {stats.map((stat, index) => (
+              <Card
+                key={index}
+                className="p-6 text-center bg-white/80 backdrop-blur-sm border-slate-200/50 shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                <stat.icon className="w-8 h-8 mx-auto mb-3 text-blue-600" />
+                <div className="text-3xl font-bold text-slate-900 mb-1">
+                  {stat.number}
                 </div>
-                <div className="flex-1 p-5 overflow-y-auto scrollbar-custom space-y-4 min-h-0 max-h-96">
-                  {conversation.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${
-                        msg.sender === "doctor"
-                          ? "justify-end"
-                          : "justify-start"
-                      } fade-in`}
-                    >
-                      <div
-                        className={`max-w-[75%] xl:max-w-sm p-4 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
-                          msg.sender === "doctor"
-                            ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-br-md"
-                            : "bg-white border border-slate-200 text-slate-800 rounded-bl-md"
-                        }`}
-                      >
-                        <p className="text-sm leading-relaxed font-medium">
-                          {msg.message}
-                        </p>
-                        <div className="flex items-center justify-between mt-3">
-                          <span
-                            className={`text-xs ${
-                              msg.sender === "doctor"
-                                ? "text-blue-100"
-                                : "text-slate-500"
-                            }`}
-                          >
-                            {msg.timestamp}
-                          </span>
-                          {msg.sender === "patient" && (
-                            <button
-                              onClick={() =>
-                                handlePatientMessageSelect(msg.message)
-                              }
-                              className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-full flex items-center transition-all duration-200 font-medium border border-blue-200 hover:border-blue-300 hover:shadow-sm"
-                            >
-                              <Send className="w-3 h-3 mr-1.5" />
-                              <span className="text-xs">TO AI</span>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="text-sm text-slate-600 font-medium">
+                  {stat.label}
                 </div>
               </Card>
+            ))}
+          </div>
+        </div>
+      </section>
 
-              {/* Video Conference Panel */}
-              <div className="flex-1 xl:max-w-lg">
-                <Card className="h-full bg-white/95 backdrop-blur-sm border-slate-200/60 shadow-xl flex flex-col rounded-xl">
-                  <div className="p-5 border-b border-slate-200/60 bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-xl">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-slate-700 tracking-wide flex items-center">
-                        <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center mr-3">
-                          <Video className="w-3 h-3 text-purple-600" />
-                        </div>
-                        VIDEO CONFERENCE
-                      </h3>
-                      <Badge
-                        variant={token ? "default" : "secondary"}
-                        className={`text-xs ${
-                          token
-                            ? "bg-green-100 text-green-700 border-green-200"
-                            : "bg-slate-100 text-slate-600 border-slate-200"
-                        }`}
-                      >
-                        <Video className="w-3 h-3 mr-1" />
-                        {token ? "Active" : "Inactive"}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="flex-1 p-5 min-h-0">
-                    {token ? (
-                      <div className="h-full rounded-xl overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 shadow-inner">
-                        <LiveKitRoom
-                          serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
-                          token={token}
-                          connect={true}
-                          video={true}
-                          audio={true}
-                          className="h-full w-full"
-                        >
-                          <VideoConference />
-                        </LiveKitRoom>
-                      </div>
-                    ) : (
-                      <div className="h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl border-2 border-dashed border-slate-300">
-                        <div className="text-center">
-                          <div className="w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center mx-auto mb-4">
-                            <Video className="w-8 h-8 text-slate-400" />
-                          </div>
-                          <p className="text-slate-600 text-sm font-medium mb-1">
-                            Session not started
-                          </p>
-                          <p className="text-slate-400 text-xs">
-                            Click "Start Session" to begin video call
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </Card>
+      {/* Features Section */}
+      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-white/50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+              Powerful Features for{" "}
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Better Healthcare
+              </span>
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              Experience the future of healthcare with our cutting-edge
+              technology and AI-powered solutions.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <Card
+                key={index}
+                className="p-8 bg-white/80 backdrop-blur-sm border-slate-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+              >
+                <div
+                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${
+                    feature.color === "blue"
+                      ? "from-blue-500 to-blue-600"
+                      : feature.color === "purple"
+                      ? "from-purple-500 to-purple-600"
+                      : feature.color === "green"
+                      ? "from-green-500 to-green-600"
+                      : feature.color === "red"
+                      ? "from-red-500 to-red-600"
+                      : feature.color === "orange"
+                      ? "from-orange-500 to-orange-600"
+                      : "from-cyan-500 to-cyan-600"
+                  } flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-200`}
+                >
+                  <feature.icon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">
+                  {feature.title}
+                </h3>
+                <p className="text-slate-600 leading-relaxed">
+                  {feature.description}
+                </p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Demo Video Section */}
+      <section id="demo-video" className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+            See Arogya Sahayak in{" "}
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Action
+            </span>
+          </h2>
+          <p className="text-xl text-slate-600 mb-12 max-w-3xl mx-auto">
+            Watch how our platform connects patients with doctors seamlessly,
+            breaking language barriers and providing instant medical assistance.
+          </p>
+
+          {/* Video Placeholder */}
+          <div className="relative rounded-2xl overflow-hidden shadow-3xl bg-gradient-to-br from-slate-900 to-slate-800 aspect-video">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 hover:bg-white/30 transition-colors cursor-pointer">
+                  <Play className="w-8 h-8 text-white ml-1" />
+                </div>
+                <p className="text-white/80 text-lg">Demo Video Coming Soon</p>
               </div>
             </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
           </div>
         </div>
+      </section>
 
-        {/* Desktop AI Panel */}
-        <div className="hidden xl:flex w-96 bg-gradient-to-b from-purple-50 to-purple-100/50 border-l border-purple-200/60 flex-col backdrop-blur-sm">
-          <div className="bg-gradient-to-r from-purple-100 to-purple-200/80 p-5 border-b border-purple-300/60 backdrop-blur-sm">
-            <h3 className="font-semibold text-purple-900 text-sm flex items-center">
-              <div className="w-5 h-5 rounded-full bg-purple-200 flex items-center justify-center mr-3">
-                <MessageSquare className="w-3 h-3 text-purple-700" />
-              </div>
-              AI ASSISTANT
-            </h3>
+      {/* Testimonials Section */}
+      <section
+        id="testimonials"
+        className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50/50 to-purple-50/30"
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+              Trusted by{" "}
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Healthcare Heroes
+              </span>
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              Hear from doctors and patients who are transforming healthcare
+              with Arogya Sahayak.
+            </p>
           </div>
-          <div className="flex-1 overflow-hidden">
-            <AIChatPanel
-              patientMessage={selectedPatientMessage}
-              conversationContext={conversationContext}
-              onSendToUser={handleSendToUser}
-            />
-          </div>
-        </div>
 
-        {/* Mobile AI Panel Overlay */}
-        {showAIPanel && (
-          <div
-            className="xl:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowAIPanel(false)}
-          >
-            <div
-              className="absolute bottom-0 left-0 right-0 h-4/5 bg-white/95 backdrop-blur-sm rounded-t-3xl shadow-2xl border-t border-slate-200"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-5 border-b border-slate-200 bg-gradient-to-r from-purple-50 to-purple-100">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-purple-900 flex items-center">
-                    <div className="w-5 h-5 rounded-full bg-purple-200 flex items-center justify-center mr-3">
-                      <MessageSquare className="w-3 h-3 text-purple-700" />
+          <div className="grid md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <Card
+                key={index}
+                className="p-8 bg-white/80 backdrop-blur-sm border-slate-200/50 shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                <div className="flex items-center mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className="w-5 h-5 text-yellow-400 fill-current"
+                    />
+                  ))}
+                </div>
+                <p className="text-slate-700 mb-6 leading-relaxed italic">
+                  "{testimonial.content}"
+                </p>
+                <div className="flex items-center">
+                  <div className="text-3xl mr-3">{testimonial.avatar}</div>
+                  <div>
+                    <div className="font-semibold text-slate-900">
+                      {testimonial.name}
                     </div>
-                    AI Assistant
-                  </h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowAIPanel(false)}
-                    className="p-2 hover:bg-purple-100 rounded-full"
-                  >
-                    <MoreVertical className="h-4 w-4 text-purple-700" />
-                  </Button>
+                    <div className="text-sm text-slate-600">
+                      {testimonial.role}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 to-purple-600">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            Ready to Transform Your Healthcare Experience?
+          </h2>
+          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+            Join thousands of patients and doctors who are already experiencing
+            the future of healthcare.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/patient">
+              <Button
+                size="lg"
+                className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-lg font-semibold"
+              >
+                <Stethoscope className="w-5 h-5 mr-2" />
+                Start Free Consultation
+              </Button>
+            </Link>
+            <Link href="/dashboard">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-2 border-white/30 text-white hover:bg-white/10 px-8 py-4 rounded-xl text-lg transition-all duration-200"
+              >
+                <Users className="w-5 h-5 mr-2" />
+                Doctor Dashboard
+              </Button>
+            </Link>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-2 border-white/30 text-white hover:bg-white/10 px-8 py-4 rounded-xl text-lg transition-all duration-200"
+            >
+              <Phone className="w-5 h-5 mr-2" />
+              Contact Sales
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer
+        id="contact"
+        className="bg-slate-900 text-white py-16 px-4 sm:px-6 lg:px-8"
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-8">
+            {/* Company Info */}
+            <div className="md:col-span-2">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                  <Heart className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">Arogya Sahayak</h3>
+                  <p className="text-slate-400 text-sm">
+                    Your Health Companion
+                  </p>
                 </div>
               </div>
-              <div className="flex-1 h-full overflow-hidden">
-                <AIChatPanel
-                  patientMessage={selectedPatientMessage}
-                  conversationContext={conversationContext}
-                  onSendToUser={handleSendToUser}
-                />
+              <p className="text-slate-300 mb-6 leading-relaxed">
+                Bridging the gap between patients and healthcare providers
+                through innovative technology, multilingual support, and
+                AI-powered medical assistance.
+              </p>
+              <div className="flex space-x-4">
+                <div className="flex items-center text-slate-300 mb-2">
+                  <Mail className="w-4 h-4 mr-2" />
+                  support@arogyasahayak.com
+                </div>
+              </div>
+              <div className="flex items-center text-slate-300 mb-2">
+                <Phone className="w-4 h-4 mr-2" />
+                +91 1800-AROGYA (276492)
+              </div>
+              <div className="flex items-center text-slate-300">
+                <MapPin className="w-4 h-4 mr-2" />
+                Bangalore, Karnataka, India
               </div>
             </div>
+
+            {/* Quick Links */}
+            <div>
+              <h4 className="font-semibold mb-4">Quick Links</h4>
+              <ul className="space-y-2 text-slate-300">
+                <li>
+                  <Link
+                    href="#features"
+                    className="hover:text-white transition-colors"
+                  >
+                    Features
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="#services"
+                    className="hover:text-white transition-colors"
+                  >
+                    Services
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/patient"
+                    className="hover:text-white transition-colors"
+                  >
+                    Patient Portal
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:text-white transition-colors">
+                    Doctor Login
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Support */}
+            <div>
+              <h4 className="font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 text-slate-300">
+                <li>
+                  <Link href="#" className="hover:text-white transition-colors">
+                    Help Center
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:text-white transition-colors">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:text-white transition-colors">
+                    Terms of Service
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:text-white transition-colors">
+                    Medical Disclaimer
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
-        )}
-      </div>
+
+          <div className="border-t border-slate-800 mt-12 pt-8 text-center text-slate-400">
+            <p>&copy; 2025 Arogya Sahayak. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
