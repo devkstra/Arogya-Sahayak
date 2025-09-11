@@ -519,7 +519,7 @@ export default function HomePage() {
               </div>
               <div className="flex items-center text-slate-300">
                 <MapPin className="w-4 h-4 mr-2" />
-                Bangalore, Karnataka, India
+                Mumbai, Maharashtra, India
               </div>
             </div>
 
