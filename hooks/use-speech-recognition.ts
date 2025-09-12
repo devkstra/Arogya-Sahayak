@@ -10,77 +10,93 @@ interface SpeechRecognitionResult {
 }
 
 interface UseSpeechRecognitionReturn {
-  startRemoteTranscription: (stream: MediaStream) => void
-  stopRemoteTranscription: () => void
-  remoteTranscription: string
+  startRecording: (language?: string) => Promise<void>
+  stopRecording: () => Promise<SpeechRecognitionResult | null>
+  isRecording: boolean
   isProcessing: boolean
   error: string | null
 }
 
 export function useSpeechRecognition(): UseSpeechRecognitionReturn {
+  const [isRecording, setIsRecording] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [remoteTranscription, setRemoteTranscription] = useState("")
 
-  const remoteMediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
 
-  const startRemoteTranscription = useCallback((stream: MediaStream) => {
-    if (remoteMediaRecorderRef.current || stream.getAudioTracks().length === 0) {
-      return // Already transcribing or no audio track
+  const startRecording = useCallback(async (language = "en") => {
+    try {
+      setError(null)
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+
+      audioChunksRef.current = []
+      mediaRecorderRef.current = new MediaRecorder(stream)
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+
+      mediaRecorderRef.current.start(1000) // Collect data every second
+      setIsRecording(true)
+    } catch (err) {
+      setError("Failed to start recording")
+      console.error("Recording error:", err)
     }
-    const mediaRecorder = new MediaRecorder(stream)
-    remoteMediaRecorderRef.current = mediaRecorder
-    console.log("Starting remote transcription...")
+  }, [])
 
-    mediaRecorder.ondataavailable = async (event) => {
-      if (event.data.size > 0) {
+  const stopRecording = useCallback(async (): Promise<SpeechRecognitionResult | null> => {
+    return new Promise((resolve) => {
+      if (!mediaRecorderRef.current || !isRecording) {
+        resolve(null)
+        return
+      }
+
+      mediaRecorderRef.current.onstop = async () => {
+        setIsRecording(false)
         setIsProcessing(true)
-        setError(null)
-        const audioBlob = new Blob([event.data], { type: "audio/webm" })
-        const formData = new FormData()
-        formData.append("audio", audioBlob)
-        formData.append("language", "en") // This would come from props if needed
 
         try {
+          const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" })
+          const formData = new FormData()
+          formData.append("audio", audioBlob)
+          formData.append("language", "en") // Default to English
+
           const response = await fetch("/api/speech-to-text", {
             method: "POST",
             body: formData,
           })
 
           if (!response.ok) {
-            throw new Error(`Speech recognition failed: ${response.statusText}`)
+            throw new Error("Speech recognition failed")
           }
 
           const result = await response.json()
-          if (result.transcription) {
-            setRemoteTranscription(result.transcription)
-          }
+          resolve(result)
         } catch (err) {
-          const errorMessage = err instanceof Error ? err.message : "Speech processing failed"
-          setError(errorMessage)
-          console.error("Error with remote transcription:", err)
+          setError("Failed to process speech")
+          console.error("Speech processing error:", err)
+          resolve(null)
         } finally {
           setIsProcessing(false)
         }
       }
-    }
 
-    // Process audio in 3-second chunks
-    mediaRecorder.start(3000)
-  }, [])
+      mediaRecorderRef.current.stop()
 
-  const stopRemoteTranscription = useCallback(() => {
-    if (remoteMediaRecorderRef.current && remoteMediaRecorderRef.current.state === "recording") {
-      remoteMediaRecorderRef.current.stop()
-      remoteMediaRecorderRef.current = null
-      console.log("Stopped remote transcription.")
-    }
-  }, [])
+      // Stop all tracks
+      if (mediaRecorderRef.current.stream) {
+        mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop())
+      }
+    })
+  }, [isRecording])
 
   return {
-    startRemoteTranscription,
-    stopRemoteTranscription,
-    remoteTranscription,
+    startRecording,
+    stopRecording,
+    isRecording,
     isProcessing,
     error,
   }
