@@ -2,7 +2,7 @@ import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-  const deepgram = createClient(process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY!);
+  const deepgram = createClient(process.env.DEEPGRAM_API_KEY!);
 
   const { searchParams } = new URL(request.url);
   const roomName = searchParams.get("room");
