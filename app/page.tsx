@@ -166,7 +166,7 @@ export default function HomePage() {
               >
                 Dashboard
               </Link>
-              <Link href="/patient">
+              <Link href="http://localhost:5173">
                 <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200">
                   <Stethoscope className="w-4 h-4 mr-2" />
                   Start Consultation
@@ -221,7 +221,7 @@ export default function HomePage() {
                 >
                   Dashboard
                 </Link>
-                <Link href="/patient" className="w-full">
+                <Link href="http://localhost:5173" className="w-full">
                   <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg shadow-lg">
                     <Stethoscope className="w-4 h-4 mr-2" />
                     Start Consultation
